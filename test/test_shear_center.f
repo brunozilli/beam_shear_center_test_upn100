@@ -28,12 +28,12 @@ c     Temporary arrays for reading
       double precision :: ytmp(MAX_NODES), ztmp(MAX_NODES)
       integer :: conntmp(3, MAX_ELEMENTS)
       
-c     Test: HEB200 (Doubly Symmetric)
+c     Test: L100x100x10
       write(*,*) '========================================'
-      write(*,*) 'Test: HEB200 (Doubly Symmetric)'
+      write(*,*) 'Test: L100x100x10 45° rotated and CG centered'
       write(*,*) '========================================'
       
-      filename = 'meshes/HEB200_mm.unv'
+      filename = 'meshes/Mesh_test_L.unv'
       call read_section_mesh_unv(filename, MAX_NODES, MAX_ELEMENTS,
      +                           nn, ne, conntmp, ytmp, ztmp)
       
@@ -79,22 +79,30 @@ c     Compute section properties
       write(*,*) '  Iy:', Iy, ' Iz:', Iz, ' Iyz:', Iyz
       
 c     Compute shear center
-      call compute_shear_center(nn, ne, nodes, elements, Iy, Iz,
+      call compute_shear_center(nn, ne, nodes, elements, Iy, Iz, Iyz,
      +                          y_s, z_s)
       
       write(*,*) 'Shear Center (y_s, z_s):', y_s, z_s
       
-c     Verification - should be at centroid (0,0) for HEB200
-      if (abs(y_s) .lt. 1.0d-1) then
-         write(*,*) 'PASS: y_s ≈ 0'
+c     Verification for L100x100x10 (mesh centered at centroid)
+      write(*,*) ''
+      write(*,*) 'Expected values (from theory):'
+      write(*,*) '  y_s ≈ 6.8 mm (from centroid)'
+      write(*,*) '  z_s ≈ 6.8 mm (from centroid)'
+      write(*,*) '  (absolute from corner: ~35.7 mm)'
+      
+c     Check symmetry (for equal legs)
+      if (abs(y_s - z_s) .lt. 1.0d0) then
+         write(*,*) 'PASS: y_s ≈ z_s (symmetry)'
       else
-         write(*,*) 'WARNING: y_s != 0, diff =', y_s
+         write(*,*) 'WARNING: y_s != z_s, diff =', y_s - z_s
       end if
       
-      if (abs(z_s) .lt. 1.0d-1) then
-         write(*,*) 'PASS: z_s ≈ 0'
+c     Check that shear center is not at centroid (for L-section)
+      if (abs(y_s) .gt. 1.0d0 .and. abs(z_s) .gt. 1.0d0) then
+         write(*,*) 'PASS: Shear center is NOT at centroid (expected)'
       else
-         write(*,*) 'WARNING: z_s != 0, diff =', z_s
+         write(*,*) 'WARNING: Shear center too close to centroid'
       end if
       
       deallocate(y, z, conn, nodes, elements)

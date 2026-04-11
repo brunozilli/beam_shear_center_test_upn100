@@ -1,0 +1,27 @@
+# Compiled files
+*.o
+*.mod
+*.exe
+test/test_shear_center
+test/test_torsion
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+*.tmp
+*.log
+
+# Mesh backups
+meshes/*.bak
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# OS generated
+.DS_Store
+Thumbs.db
