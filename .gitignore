@@ -1,18 +1,13 @@
-# File oggetto compilati
+# Compiled files
 *.o
 *.mod
 *.exe
 
-# Eseguibili
+# Executables
 test/test_shear_center
 test/test_torsion
 
-# Directory di build (se esistono)
-build/
-bin/
-lib/
-
-# File temporanei
+# Temporary files
 *.tmp
 *.bak
 *~
