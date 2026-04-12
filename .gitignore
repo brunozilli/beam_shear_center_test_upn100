@@ -1,27 +1,18 @@
-# Compiled files
+# File oggetto compilati
 *.o
 *.mod
 *.exe
+
+# Eseguibili
 test/test_shear_center
 test/test_torsion
 
-# Backup files
-*.bak
-*.backup
-*~
+# Directory di build (se esistono)
+build/
+bin/
+lib/
 
-# Temporary files
+# File temporanei
 *.tmp
-*.log
-
-# Mesh backups
-meshes/*.bak
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-
-# OS generated
-.DS_Store
-Thumbs.db
+*.bak
+*~
