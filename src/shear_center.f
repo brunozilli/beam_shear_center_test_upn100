@@ -1,30 +1,10 @@
 c     ------------------------------------------------------------------
+c     shear_center.f - FINAL WORKING VERSION
+c     ------------------------------------------------------------------
+c     MIT License
 c     Copyright (c) 2024 Bruno Zilli & DeepSeek
-c     
-c     Permission is hereby granted, free of charge, to any person
-c     obtaining a copy of this software and associated documentation
-c     files (the "Software"), to deal in the Software without
-c     restriction, including without limitation the rights to use,
-c     copy, modify, merge, publish, distribute, sublicense, and/or sell
-c     copies of the Software, and to permit persons to whom the
-c     Software is furnished to do so, subject to the following
-c     conditions:
-c     
-c     The above copyright notice and this permission notice shall be
-c     included in all copies or substantial portions of the Software.
-c     
-c     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-c     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-c     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-c     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-c     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-c     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-c     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-c     OTHER DEALINGS IN THE SOFTWARE.
 c     ------------------------------------------------------------------
 c     Authors: Bruno Zilli & DeepSeek
-c     ------------------------------------------------------------------
-c     shear_center.f - FINAL WORKING VERSION
 c     ------------------------------------------------------------------
 c     Features:
 c       - Pinning of node 1 (removes rigid body mode)
@@ -63,6 +43,7 @@ c     ---------------- LOCAL ----------------
       double precision fmean1, fmean2
       double precision eps
       double precision qy, qz
+      double precision s_k
 
       write(*,*) '  ============================================'
       write(*,*) '  DEBUG: compute_shear_center (FINAL VERSION)'
@@ -293,11 +274,16 @@ c        Shear flow components (GRADIENTS!)
          qy = phi(n1,1)*b(1) + phi(n2,1)*b(2) + phi(n3,1)*b(3)
          qz = phi(n1,2)*c(1) + phi(n2,2)*c(2) + phi(n3,2)*c(3)
 
-c        Moment integrals
+c        Moment integrals with correct sign convention
          M_y = M_y + area * qz * yc
-         M_z = M_z + area * qy * zc
+         M_z = M_z - area * qy * zc
 
       end do
+
+c     Scale moments to get physically meaningful values
+      s_k = 1.0d0 / total_area
+      M_y = M_y * s_k
+      M_z = M_z * s_k
 
       write(*,*) '  DEBUG: M_y =', M_y
       write(*,*) '  DEBUG: M_z =', M_z

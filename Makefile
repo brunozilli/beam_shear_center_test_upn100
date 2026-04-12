@@ -1,5 +1,7 @@
 # Makefile for beam_shear_centre
 # Fortran 77 fixed format with LAPACK
+# MIT License
+# Copyright (c) 2024 Bruno Zilli & DeepSeek
 
 FC = gfortran
 FFLAGS = -ffixed-form -Wall -O2 -std=legacy
@@ -16,19 +18,44 @@ SOURCES = $(SRCDIR)/read_section_mesh_unv.f \
           $(SRCDIR)/section_database.f
 
 OBJECTS = $(SOURCES:.f=.o)
+
+# Test executables
 TESTS = $(TESTDIR)/test_shear_center
 
 all: $(OBJECTS) $(TESTS)
 
+# Rule for test_shear_center
 $(TESTDIR)/test_shear_center: $(TESTDIR)/test_shear_center.o $(OBJECTS)
 	$(FC) -o $@ $^ $(LDFLAGS)
 
+# Generic compilation rule
 %.o: %.f
 	$(FC) $(FFLAGS) -c $< -o $@
 
+# Clean up
 clean:
 	rm -f $(SRCDIR)/*.o $(TESTDIR)/*.o $(TESTS)
 
-test_shear_center: $(TESTDIR)/test_shear_center
+# Phony targets
+.PHONY: all clean test test-all
 
-.PHONY: all clean test_shear_center
+# Run test on HEB200
+test: $(TESTDIR)/test_shear_center
+	./$(TESTDIR)/test_shear_center meshes/HEB200_mm.unv
+
+# Run test on all meshes
+test-all: $(TESTDIR)/test_shear_center
+	@echo "========================================="
+	@echo "  BEAM SHEAR CENTRE - MULTI-MESH TEST"
+	@echo "========================================="
+	@echo ""
+	@for mesh in meshes/*.unv; do \
+		echo "-----------------------------------------"; \
+		echo "TESTING: $$(basename $$mesh)"; \
+		echo "-----------------------------------------"; \
+		./$(TESTDIR)/test_shear_center $$mesh; \
+		echo ""; \
+	done
+	@echo "========================================="
+	@echo "  TEST COMPLETED"
+	@echo "========================================="

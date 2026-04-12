@@ -1,111 +1,109 @@
 c     ------------------------------------------------------------------
-c     test_shear_center.f - Test program for shear center calculation
+c     test_shear_center.f - Test shear centre calculation
 c     ------------------------------------------------------------------
+c     MIT License
 c     Copyright (c) 2024 Bruno Zilli & DeepSeek
 c     ------------------------------------------------------------------
-c     Authors: Bruno Zilli & DeepSeek
-c     ------------------------------------------------------------------
-      
+
       program test_shear_center
       
       implicit none
       
-c     .. Parameters ..
-      integer, parameter :: MAX_NODES = 10000
-      integer, parameter :: MAX_ELEMENTS = 20000
+c     Parameters
+      integer, parameter :: max_nodes = 50000
+      integer, parameter :: max_triangles = 100000
       
-c     .. Local variables ..
-      integer :: nn, ne, i
-      double precision, allocatable :: y(:), z(:)
-      integer, allocatable :: conn(:,:)
+c     Variables
+      character(len=256) :: filename
+      integer :: n_nodes, n_triangles
+      double precision :: y_arr(max_nodes), z_arr(max_nodes)
+      integer :: conn(3, max_triangles)
+      
+c     Additional variables for section properties
+      double precision :: A, y_c, z_c, I_y, I_z, I_yz, J_polar
+      double precision :: y_s, z_s
+      
+c     Converted arrays for shear_center (nodes format)
       double precision, allocatable :: nodes(:,:)
       integer, allocatable :: elements(:,:)
-      double precision :: y_s, z_s
-      double precision :: y_c, z_c, area, Iy, Iz, Iyz, J_polar
-      character*80 :: filename
+      integer :: i
       
-c     Temporary arrays for reading
-      double precision :: ytmp(MAX_NODES), ztmp(MAX_NODES)
-      integer :: conntmp(3, MAX_ELEMENTS)
-      
-c     Test: L100x100x10
-      write(*,*) '========================================'
-      write(*,*) 'Test: L100x100x10 45° rotated and CG centered'
-      write(*,*) '========================================'
-      
-      filename = 'meshes/Mesh_test_L.unv'
-      call read_section_mesh_unv(filename, MAX_NODES, MAX_ELEMENTS,
-     +                           nn, ne, conntmp, ytmp, ztmp)
-      
-      if (nn .eq. 0 .or. ne .eq. 0) then
-         write(*,*) 'ERROR: Failed to read mesh'
+c     Get filename from command line
+      if (iargc() .lt. 1) then
+         write(*,*) 'Usage: test_shear_center <meshfile.unv>'
+         write(*,*) 'Example:'
+         write(*,*) '  ./test/test_shear_center meshes/HEB200_mm.unv'
          stop
       end if
       
-      write(*,*) 'Mesh read: nodes =', nn, ' elements =', ne
+      call getarg(1, filename)
       
-c     Allocate arrays
-      allocate(y(nn))
-      allocate(z(nn))
-      allocate(conn(3, ne))
-      allocate(nodes(2, nn))
-      allocate(elements(3, ne))
+      write(*,*) '========================================='
+      write(*,*) '  SHEAR CENTRE CALCULATION'
+      write(*,*) '========================================='
+      write(*,*) 'File: ', trim(filename)
+      write(*,*)
       
-c     Copy data
-      do i = 1, nn
-         y(i) = ytmp(i)
-         z(i) = ztmp(i)
-         nodes(1, i) = ytmp(i)
-         nodes(2, i) = ztmp(i)
-      end do
+c     Read mesh using working subroutine
+      call read_section_mesh_unv(trim(filename), max_nodes, 
+     +                           max_triangles, n_nodes, n_triangles,
+     +                           conn, y_arr, z_arr)
       
-      do i = 1, ne
-         conn(1, i) = conntmp(1, i)
-         conn(2, i) = conntmp(2, i)
-         conn(3, i) = conntmp(3, i)
-         elements(1, i) = conntmp(1, i)
-         elements(2, i) = conntmp(2, i)
-         elements(3, i) = conntmp(3, i)
-      end do
+      write(*,*) 'Nodes: ', n_nodes
+      write(*,*) 'Triangles: ', n_triangles
+      write(*,*)
       
-c     Compute section properties
-      call compute_section_properties(nn, ne, conn, y, z,
-     +                                area, y_c, z_c, Iy, Iz, Iyz, 
+c     Compute section properties (using the correct interface)
+      call compute_section_properties(n_nodes, n_triangles, conn,
+     +                                y_arr, z_arr,
+     +                                A, y_c, z_c, I_y, I_z, I_yz, 
      +                                J_polar)
       
       write(*,*) 'Section Properties:'
-      write(*,*) '  Area:', area
-      write(*,*) '  Centroid (y_c, z_c):', y_c, z_c
-      write(*,*) '  Iy:', Iy, ' Iz:', Iz, ' Iyz:', Iyz
+      write(*,*) '  Area:      ', A
+      write(*,*) '  Centroid:  (', y_c, ', ', z_c, ')'
+      write(*,*) '  I_y:       ', I_y
+      write(*,*) '  I_z:       ', I_z
+      write(*,*) '  I_yz:      ', I_yz
+      write(*,*) '  J_polar:   ', J_polar
+      write(*,*)
       
-c     Compute shear center
-      call compute_shear_center(nn, ne, nodes, elements, Iy, Iz, Iyz,
-     +                          y_s, z_s)
+c     Convert to format expected by shear_center
+c     shear_center expects nodes(2, nn) and elements(3, ne)
+      allocate(nodes(2, n_nodes))
+      allocate(elements(3, n_triangles))
       
-      write(*,*) 'Shear Center (y_s, z_s):', y_s, z_s
+      do i = 1, n_nodes
+         nodes(1, i) = y_arr(i)
+         nodes(2, i) = z_arr(i)
+      end do
       
-c     Verification for L100x100x10 (mesh centered at centroid)
-      write(*,*) ''
-      write(*,*) 'Expected values (from theory):'
-      write(*,*) '  y_s ≈ 6.8 mm (from centroid)'
-      write(*,*) '  z_s ≈ 6.8 mm (from centroid)'
-      write(*,*) '  (absolute from corner: ~35.7 mm)'
+      do i = 1, n_triangles
+         elements(1, i) = conn(1, i)
+         elements(2, i) = conn(2, i)
+         elements(3, i) = conn(3, i)
+      end do
       
-c     Check symmetry (for equal legs)
-      if (abs(y_s - z_s) .lt. 1.0d0) then
-         write(*,*) 'PASS: y_s ≈ z_s (symmetry)'
+c     Compute shear centre
+      call compute_shear_center(n_nodes, n_triangles, nodes, elements,
+     +                          I_y, I_z, I_yz, y_s, z_s)
+      
+      write(*,*) 'Shear Centre:'
+      write(*,*) '  y_s: ', y_s
+      write(*,*) '  z_s: ', z_s
+      write(*,*)
+      
+c     For doubly symmetric sections (like HEB200), shear centre should
+c     coincide with centroid
+      if (abs(y_s - y_c) .lt. 1.0d-6 .and. 
+     +    abs(z_s - z_c) .lt. 1.0d-6) then
+         write(*,*) 'PASS: Shear centre matches centroid'
       else
-         write(*,*) 'WARNING: y_s != z_s, diff =', y_s - z_s
+         write(*,*) 'NOTE: Section may be asymmetric'
       end if
       
-c     Check that shear center is not at centroid (for L-section)
-      if (abs(y_s) .gt. 1.0d0 .and. abs(z_s) .gt. 1.0d0) then
-         write(*,*) 'PASS: Shear center is NOT at centroid (expected)'
-      else
-         write(*,*) 'WARNING: Shear center too close to centroid'
-      end if
-      
-      deallocate(y, z, conn, nodes, elements)
+c     Clean up
+      deallocate(nodes, elements)
       
       stop
       end

@@ -2,12 +2,17 @@
 *.o
 *.mod
 *.exe
+*.bak
 
 # Executables
 test/test_shear_center
-test/test_torsion
+test/test_all_meshes
+test/check_orientation
+test/test_read_working
+test/test_read_only
+test/test_sign
 
 # Temporary files
-*.tmp
-*.bak
 *~
+*.tmp
+*.swp
