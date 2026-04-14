@@ -1,166 +1,111 @@
-text
-
-## 📘 README.md
-
-```markdown
-# Beam Shear Centre Calculator
+# Open Section Shear Centre Solver
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Fortran](https://img.shields.io/badge/Fortran-F77%2FF90-blue.svg)](https://fortran-lang.org)
 
-A **finite element tool** for computing the **shear centre** (flexural centre)
-of arbitrary thin-walled beam sections. Compatible with UNV mesh files from
-Salome or other pre-processors.
+A robust, industrial-grade solver for computing the **shear centre** of 
+open thin-walled sections (UPN, C-channels, L-sections) from a 1D midline 
+mesh or 2D triangular mesh.
 
-## ✨ Features
+## Features
 
-- ✅ Arbitrary cross-section geometry (meshed with triangles)
-- ✅ Shear centre calculation for asymmetric sections
-- ✅ Handles non-principal axes (Iyz ≠ 0)
-- ✅ Tensor inversion method (Abaqus/ANSYS level)
-- ✅ UNV mesh format support
-- ✅ LAPACK linear solver (DGELS)
+- ✅ Supports both **1D edge meshes** (UNV format) and **2D triangular meshes**
+- ✅ Automatic **web/flange classification** based on local tangent
+- ✅ **Open chain reconstruction** from leftmost to rightmost flange tip
+- ✅ **Correct shear flow integration** with projected force components
+- ✅ **Area-weighted centroid** calculation for 2D meshes
+- ✅ **Explicit X/Y axes** output (flange axis vs. web axis)
+- ✅ **Pure Fortran 77** (fixed-form) compatible with `gfortran`
+- ✅ **No external dependencies** beyond LAPACK/BLAS
 
-## 🏗️ Project Structure
-beam_shear_center_test_L/
-├── src/
-│ ├── read_section_mesh_unv.f # UNV mesh reader
-│ ├── compute_section_properties.f # Area, centroid, Iy, Iz, Iyz
-│ ├── shear_center.f # Main shear centre solver
-│ └── mesh_checker.f # Mesh validation
-├── test/
-│ └── test_shear_center.f # Test program
-├── meshes/
-│ ├── HEB200_mm.unv # Symmetric section (validation)
-│ └── L_section_100x100x10.unv # L-section (test)
-├── Makefile # Build system
-├── LICENSE # MIT License
-├── DISCLAIMER.md # Usage disclaimer
-├── THEORY.md # Complete theory guide
-└── README.md # This file
-
-text
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **gfortran** (GNU Fortran compiler)
-- **LAPACK** and **BLAS** libraries
-- **Salome** (optional, for mesh generation)
+- `gfortran` (or any Fortran compiler)
+- LAPACK and BLAS libraries
 
-### Installation
+### Compilation
 
 ```bash
-# Clone or download the project
-cd beam_shear_center_test_L
+make clean && make
+Running a Test
+bash
+./test/test_shear_center meshes/upn100_1D.unv
+Expected Output (UPN100)
+text
+Shear Center Results:
+  X_sc = -26.94 mm  (flange axis - out of web)
+  Y_sc =   1.00 mm  (web axis - vertical)
+Mesh Requirements
+1D Mesh (UNV Format)
+Elements of type 11 (linear edges) or 41 (triangles)
 
-# Compile
-make clean
-make
+Nodes should lie on the midline of the section
 
-# Run test
-./test/test_shear_center meshes/HEB200_mm.unv      # symmetric section
-./test/test_shear_center meshes/L_section.unv      # L-section
-Mesh Preparation (Salome)
-Create 2D sketch of your cross-section
+Open chain topology (two free ends)
 
-Generate triangular mesh (NETGEN 2D)
-
-Export as UNV format
-
-Place in meshes/ directory
-
-UNV format requirements:
-
-Nodes with coordinates (y, z)
-
+2D Mesh (UNV Format)
 Triangular elements (type 41)
 
-Consistent orientation (CCW)
+The solver automatically extracts the boundary contour
 
-📊 Example Output
+File Structure
 text
-========================================
-Test: L100x100x10 45° rotated
-========================================
-Section Properties:
-  Area:   1915.099 mm²
-  Centroid (y_c, z_c):   0.0085 mm, 0.0085 mm
-  Iy:   1.764e6 mm⁴
-  Iz:   1.764e6 mm⁴
-  Iyz:  -1.035e6 mm⁴
+.
+├── src/
+│   ├── shear_center.f              # Main solver
+│   ├── compute_section_properties.f # Section properties (2D)
+│   ├── read_section_mesh_unv.f     # UNV mesh reader
+│   ├── mesh_checker.f              # Mesh validation
+│   ├── build_D_matrix.f            # Utility routines
+│   └── section_database.f          # Section database
+├── test/
+│   └── test_shear_center.f         # Test driver
+├── meshes/
+│   └── upn100_1D.unv               # Example UPN100 midline mesh
+├── Makefile
+├── LICENSE.md
+├── DISCLAIMER.md
+├── THEORY.md
+└── README.md
+API Reference
+Main Subroutine
+fortran
+subroutine compute_shear_center(nn, ne, nodes, elements, 
+                                Ixx, Iyy, Ixy, x_sc, y_sc)
+Parameter	Type	Description
+nn	integer	Number of nodes
+ne	integer	Number of elements
+nodes	double precision(3,nn)	Node coordinates (X, Y, Z)
+elements	integer(3,ne)	Element connectivity
+Ixx, Iyy, Ixy	double precision	Second moments of area
+x_sc, y_sc	double precision	Shear centre coordinates
+Limitations
+Open sections only – closed sections require Bredt's constant
 
-Shear Center (y_s, z_s):   24.49 mm, -24.49 mm
+Constant thickness assumed – variable thickness not modelled
 
-Expected (from theory):
-  Distance from corner: 35.7 mm
-  Error: 3.1% (mesh convergence improves accuracy)
-🧪 Validation
-Section	Symmetry	Expected	Result	Status
-HEB200	Doubly symmetric	y_s = 0, z_s = 0	<1e-6 mm	✅ PASS
-L100×100×10	Asymmetric	y_s = z_s ≈ 35.7 mm from corner	34.6 mm	✅ PASS
-📚 Documentation
-THEORY.md - Complete mathematical derivation
+Coarse meshes may introduce integration errors
 
-DISCLAIMER.md - Terms of use
+Contributing
+Contributions are welcome! Please open an issue or submit a pull request.
 
-Source code comments - Inline documentation
+Authors
+Bruno Zilli
 
-⚙️ Build Configuration
-Makefile variables:
+DeepSeek
 
-makefile
-FC = gfortran
-FFLAGS = -Wall -O2 -std=legacy
-LAPACK = -llapack -lblas
-🐛 Troubleshooting
-Issue	Solution
-DGELS fails	Check mesh orientation (CCW)
-Negative area	Element orientation reversed
-Shear centre at centroid	Section may be symmetric
-Large errors	Refine mesh (smaller elements)
-📖 Theory Highlights
-The shear centre (y_s, z_s) is computed via:
+License
+This project is licensed under the MIT License – see the LICENSE.md file for details.
 
-text
-y_s = (I_z·M_y - I_yz·M_z) / (I_y·I_z - I_yz²)
-z_s = (I_y·M_z - I_yz·M_y) / (I_y·I_z - I_yz²)
-where M_y and M_z are integrals of the shear flow from two auxiliary
-Poisson problems solved via FEM.
+Disclaimer
+This software is provided for educational and research purposes only.
+See DISCLAIMER.md for full details.
 
-See THEORY.md for complete derivation.
+References
+Vlasov, V.Z. (1961). Thin-Walled Elastic Beams
 
-🤝 Contributing
-Fork the repository
+Timoshenko, S.P. & Goodier, J.N. (1970). Theory of Elasticity
 
-Create a feature branch
-
-Submit a pull request
-
-Guidelines:
-
-Maintain British English in comments
-
-Follow fixed-form Fortran 77 style
-
-Add validation tests for new features
-
-📜 License
-MIT License - see LICENSE file for details.
-
-⚠️ Disclaimer
-This software is provided "AS IS" without warranty. Always validate
-results with commercial software (Abaqus, ANSYS) for critical applications.
-See DISCLAIMER.md for full terms.
-
-👨‍💻 Authors
-Bruno Zilli - Implementation & validation
-
-DeepSeek - Algorithm development & documentation
-
-🙏 Acknowledgements
-LAPACK/BLAS developers for linear algebra routines
-
-Salome platform for mesh generation
-
-Timoshenko and Vlasov for foundational theory
+Pilkey, W.D. (2002). Analysis and Design of Elastic Beams
