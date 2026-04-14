@@ -1,18 +1,101 @@
-# Compiled files
+#=======================================================================
+# .gitignore - Fortran Shear Center Solver
+#=======================================================================
+
+# Compiled object files
 *.o
+*.obj
+
+# Fortran module files
 *.mod
-*.exe
-*.bak
+*.MOD
 
 # Executables
 test/test_shear_center
-test/test_all_meshes
-test/check_orientation
-test/test_read_working
-test/test_read_only
-test/test_sign
+*.exe
+*.out
+
+# Backup files (generati da editor o script)
+*~
+*.bak
+*.backup
+*.backup2
+*.swp
+*.swo
 
 # Temporary files
-*~
 *.tmp
-*.swp
+*.temp
+
+# Archive files
+*.a
+*.so
+*.dll
+*.dylib
+
+# IDE directories
+.vscode/
+.idea/
+*.code-workspace
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux system files
+.directory
+.Trash-*
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Output e log files
+*.log
+output.txt
+
+# Immagini e grafici (se non vuoi versionarli)
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+
+# Script Python (se non vuoi versionarli)
+*.py
+*.pyc
+__pycache__/
+
+# Python cache
+*.py[cod]
+*$py.class
+
+# LaTeX auxiliary files
+*.aux
+*.out
+*.toc
+*.synctex.gz
+
+# File di test non essenziali
+test/check_orientation.f
+test/test_all_meshes.f
+test/test_all_meshes_safe.f
+test/test_read_only.f
+test/test_read_working.f
+test/test_sign.f
+test/test_torsion.f
+
+# Sorgenti alternativi / obsoleti
+src/shear_center_pca.f
+src/torsion_j.f
+src/read_section_mesh_unv.f.backup
+src/shear_center.f.backup2
+
+# Directory docs (se vuoi tenerla, rimuovi questa riga)
+# docs/
+
+# Mesh originali (tieni solo quelle essenziali)
+# meshes/*.unv
+!meshes/upn100_1D.unv
