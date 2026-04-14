@@ -3,8 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Fortran](https://img.shields.io/badge/Fortran-F77%2FF90-blue.svg)](https://fortran-lang.org)
 
-A robust, industrial-grade solver for computing the **shear centre** of 
-open thin-walled sections (UPN, C-channels, L-sections) from a 1D midline 
+An academic solver for computing the **shear centre** of open thin-walled sections (UPN, C-channels, L-sections) from a 1D midline 
 mesh or 2D triangular mesh.
 
 ## Features
